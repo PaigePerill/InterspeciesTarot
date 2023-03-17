@@ -77,11 +77,12 @@ Sanding the edges and bridges and then thinking about the aesthetics. I had orgi
 
 Since I am working with Carolina on the Interspecies Tarot, and that her microchallenge group serendipitously had a similar code and electronics concept as mine, I drew on their work and got the help of Miguel, Daphne and Adai to wire the circuit and amend the code. 
 
-The idea is this. When people remove the booklet from the boxset, a voice starts playing. This means we needed to conect a capacitive sensor to the ESP32 Feather as well as an SD card reader. 
+The idea is this. When people remove the booklet from the boxset, a voice starts playing. This means we needed to conect a makeshift button to the ESP32 Feather as well as an SD card reader with an SD card uploaded with the right script (voice recording). 
 
 The Wiring then look like this: 
 
-(INSERT IMAGE)
+![](https://i.imgur.com/VN1G2Bo.jpg)
+
 
 And the code is the following: 
 
@@ -96,8 +97,9 @@ const int Touch = 14; /*Touch pin defined*/
 const int LED = LED_BUILTIN;  /*led output pin*/
 const int threshold = 25;  /*threshold value set*/
 int TouchVal;  /*store input value*/
+const int buttonpin = 25;
 
-
+int buttonstate = 0;
 
 #define RXD2 16
 #define TXD2 17
@@ -111,6 +113,9 @@ void printDetail(uint8_t type, int value);
 
 
 void setup(){
+
+  pinMode(buttonpin, INPUT_PULLUP);
+
   mySoftwareSerial.begin(9600, SERIAL_8N1, RXD2, TXD2);
   //Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
 
@@ -140,20 +145,22 @@ void setup(){
 
 
 void loop(){
-  TouchVal = touchRead(Touch); /*read touch pin value*/
-  Serial.print(TouchVal);
+  //TouchVal = touchRead(Touch); /*read touch pin value*/
+  //Serial.print(TouchVal);
   
+  buttonstate = digitalRead(buttonpin);
+  Serial.println(buttonstate);
 
-
-  if(TouchVal > threshold){  /*if touch value is less than threshold LED ON*/
+  if(buttonstate == 1){  //if touch value is bigger than threshold LED ON
     digitalWrite(LED, HIGH);
-    
-    Serial.println(" - LED on / sound on");
-  }
-  else if (TouchVal < threshold){
-    digitalWrite(LED, LOW);  /*else LED will remains OFF*/
-    myDFPlayer.playMp3Folder(1);
+    //myDFPlayer.volume(0);
     Serial.println(" - LED off / sound off");
+  }
+  else if (buttonstate == 0) {
+    digitalWrite(LED, LOW);  //else LED will remains OFF
+    myDFPlayer.volume(30);
+    myDFPlayer.playMp3Folder(1);
+    Serial.println(" - LED on / sound on");
   }
   if (myDFPlayer.available()) {
     printDetail(myDFPlayer.readType(), myDFPlayer.read()); //Print the detail message from DFPlayer to handle different errors and states.
@@ -236,13 +243,4 @@ void printDetail(uint8_t type, int value){
       break;
   }
 }
-```
-
-
-
-
-
-
-
-`
 ```
